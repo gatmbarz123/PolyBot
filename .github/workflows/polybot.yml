@@ -82,7 +82,7 @@ jobs:
           s3=$(aws resourcegroupstaggingapi get-resources --tag-filters Key=Environment,Values=polybot-project --resource-type-filters s3:bucket --output json | grep -oP '(?<=s3:::)[^"]*')
           id=$(aws sts get-caller-identity --query "Account" --output text)
           sqs_name=$(aws resourcegroupstaggingapi get-resources --tag-filters Key=Environment,Values=polybot-project --resource-type-filters sqs --output json | jq -r '.ResourceTagMappingList[].ResourceARN' | awk -F':' '{print $6}')
-          sqs_url="https://sqs.${{var.AWS_REGION}}.amazonaws.com/${id}/${sqs_name}"
+          sqs_url="https://sqs.${{vars.AWS_REGION}}.amazonaws.com/${id}/${sqs_name}"
 
           echo "dynamodb_table_name=$dynamodb" >> $GITHUB_ENV
           echo "s3_bucket_name=$s3" >> $GITHUB_ENV
