@@ -1,0 +1,103 @@
+name: "GitHub Actions polybot image build and push"
+
+on:
+  push:
+    branches:
+      - dev 
+
+jobs: 
+  Build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repo code
+        uses: actions/checkout@v3
+      
+      - name: Install Docker 
+        run: |
+          sudo apt-get update 
+          sudo apt-get install -y docker.io
+          sudo systemctl start docker
+          sudo systemctl enable docker
+          sudo usermod -aG docker $USER
+      
+      - name: Docker Login
+        env: 
+          DOCKER_USR: ${{var.DOCKER_USR}}
+          DOCKER_PWD: ${{secret.DOCKER_PWD}}
+        run: echo "$DOCKER_PWD" | docker login --username $DOCKER_USR --password-stdin
+
+      
+      - name: Docker Build 
+        run: docker build . -t polybot 
+
+      - name: Docker Tag 
+        run: docker tag polybot ${{var.DOCKER_USR}}/polybot
+
+      - name: Docker push 
+        run: docker push ${{var.DOCKER_USR}}/polybot
+
+  Deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repo code
+        uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+          mask-aws-account-id: 'no'
+      
+      - name: Install Ansible
+        run: |
+          sudo apt update
+          sudo apt install -y ansible
+      
+      - name: Create the Key
+       env:
+         PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+       run: |
+         echo "${PRIVATE_KEY}" > private_key.pem
+         chmod 600 private_key.pem
+
+      
+      - name: Create File Inventory 
+        run: |
+          echo "[servers]" > inventory.ini
+          ips=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=polybot-" --query "Reservations[].Instances[*].PublicIpAddress" --output text)
+          ips_list="["$(echo $ips | sed 's/ /", "/g' | sed 's/^/"/' | sed 's/$/"/')"]"
+          for ip in (echo $ips_list | jq -r '.[]');do
+            echo "$ip ansible_user=ubuntu ansible_ssh_private_key_file=private_key.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> inventory.ini
+          done
+          cat inventory.ini 
+        shell: bash
+
+      - name: Outputs form AWS 
+        run: |
+          dynamodb=$(aws resourcegroupstaggingapi get-resources --tag-filters Key=Environment,Values=polybot-project --resource-type-filters dynamodb:table --output json | grep -oP '(?<=table/)[^"]*' )
+          s3=$(aws resourcegroupstaggingapi get-resources --tag-filters Key=Environment,Values=polybot-project --resource-type-filters s3:bucket --output json | grep -oP '(?<=s3:::)[^"]*')
+          id=$(aws sts get-caller-identity --query "Account" --output text)
+          sqs_name=$(aws resourcegroupstaggingapi get-resources --tag-filters Key=Environment,Values=polybot-project --resource-type-filters sqs --output json | jq -r '.ResourceTagMappingList[].ResourceARN' | awk -F':' '{print $6}')
+          sqs_url="https://sqs.${{var.AWS_REGION}}.amazonaws.com/${id}/${sqs_name}"
+
+          echo "dynamodb=$dynamodb" >> $GITHUB_ENV
+          echo "s3_name=$s3" >> $GITHUB_ENV
+          echo "sqs_url=$sqs_url" >> $GITHUB_ENV
+
+
+
+      - name: Run Ansible Playbook
+        run: |
+          ansible-playbook -i inventory.ini playbook.yml \
+          --private-key private-key.pem \
+          --extra-vars "dynamodb_table_name=${{ env.dynamodb }} \
+          sqs_queue_name=${{ env.sqs_url }} \
+          s3_bucket_name=${{ env.s3_name }} \
+          AWS_REGION=${{ vars.AWS_REGION }} \
+          alb_url=${{ var.ALB_URL }}"
+
+
