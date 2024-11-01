@@ -58,11 +58,11 @@ jobs:
           sudo apt install -y ansible
       
       - name: Create the Key
-       env:
-         PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
-       run: |
-         echo "${PRIVATE_KEY}" > private_key.pem
-         chmod 600 private_key.pem
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+        run: |
+          echo "${PRIVATE_KEY}" > private_key.pem
+          chmod 600 private_key.pem
 
       
       - name: Create File Inventory 
