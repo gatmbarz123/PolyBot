@@ -1,0 +1,42 @@
+---
+- hosts: servers
+  become: true
+  vars:
+    aws_region: "{{ lookup('env', 'AWS_REGION') }}"
+    dynamodb_table_name: "{{ lookup('env', 'DYNAMODB_TABLE') }}"
+    alb_url: "{{ lookup('env', 'ALB_URL') }}"
+    s3_bucket_name: "{{ lookup('env', 'S3_BUCKET') }}"
+    sqs_queue_name: "{{ lookup('env', 'SQS_URL') }}"
+    
+  tasks:
+    - name: Install Docker
+      apt:
+        name: docker.io
+        state: present
+        update_cache: yes
+    
+    - name: Ensure Docker service is running
+      service:
+        name: docker
+        state: started
+        enabled: yes
+    
+    - name: pull image
+      docker_image:
+        name: diskoproject/polybot:latest
+        source: pull    
+   
+    - name : Install the Image and run the Docker Continer
+      docker_container:
+        name: polybot
+        image: diskoproject/polybot:latest
+        state: started
+        restart_policy: always
+        ports:
+          - "8443:8443"
+        env:
+          AWS_REGION: "{{ aws_region }}"
+          DYNAMODB_TABLE: "{{ dynamodb_table_name }}"
+          ALB_URL: "{{ alb_url }}"
+          S3_BUCKET: "{{ s3_bucket_name }}"
+          SQS_URL: "{{ sqs_queue_name }}"
