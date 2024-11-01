@@ -3,7 +3,7 @@ name: "GitHub Actions polybot image build and push"
 on:
   push:
     branches:
-      - dev 
+      - CI/CD-polybot
 
 jobs: 
   Build:
