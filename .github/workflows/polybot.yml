@@ -84,19 +84,17 @@ jobs:
           sqs_name=$(aws resourcegroupstaggingapi get-resources --tag-filters Key=Environment,Values=polybot-project --resource-type-filters sqs --output json | jq -r '.ResourceTagMappingList[].ResourceARN' | awk -F':' '{print $6}')
           sqs_url="https://sqs.${{var.AWS_REGION}}.amazonaws.com/${id}/${sqs_name}"
 
-          echo "dynamodb=$dynamodb" >> $GITHUB_ENV
-          echo "s3_name=$s3" >> $GITHUB_ENV
-          echo "sqs_url=$sqs_url" >> $GITHUB_ENV
-
-
+          echo "dynamodb_table_name=$dynamodb" >> $GITHUB_ENV
+          echo "s3_bucket_name=$s3" >> $GITHUB_ENV
+          echo "sqs_queue_name=$sqs_url" >> $GITHUB_ENV
 
       - name: Run Ansible Playbook
         run: |
           ansible-playbook -i inventory.ini playbook.yml \
-          --private-key private-key.pem \
-          --extra-vars "dynamodb_table_name=${{ env.dynamodb }} \
-          sqs_queue_name=${{ env.sqs_url }} \
-          s3_bucket_name=${{ env.s3_name }} \
+          --private-key private_key.pem \
+          --extra-vars "dynamodb_table_name=${{ env.dynamodb_table_name }} \
+          sqs_queue_name=${{ env.sqs_queue_name }} \
+          s3_bucket_name=${{ env.s3_bucket_name }} \
           AWS_REGION=${{ vars.AWS_REGION }} \
           alb_url=${{ vars.ALB_URL }}"
 
