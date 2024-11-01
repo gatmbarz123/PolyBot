@@ -24,7 +24,7 @@ jobs:
       - name: Docker Login
         env: 
           DOCKER_USR: ${{vars.DOCKER_USR}}
-          DOCKER_PWD: ${{secret.DOCKER_PWD}}
+          DOCKER_PWD: ${{secrets.DOCKER_PWD}}
         run: echo "$DOCKER_PWD" | docker login --username $DOCKER_USR --password-stdin
 
       
@@ -70,7 +70,7 @@ jobs:
           echo "[servers]" > inventory.ini
           ips=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=polybot-" --query "Reservations[].Instances[*].PublicIpAddress" --output text)
           ips_list="["$(echo $ips | sed 's/ /", "/g' | sed 's/^/"/' | sed 's/$/"/')"]"
-          for ip in (echo $ips_list | jq -r '.[]');do
+          for ip in $(echo $ips_list | jq -r '.[]');do
             echo "$ip ansible_user=ubuntu ansible_ssh_private_key_file=private_key.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> inventory.ini
           done
           cat inventory.ini 
