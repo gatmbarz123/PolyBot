@@ -89,7 +89,7 @@ jobs:
           --extra-vars "dynamodb_table_name=${{ env.dynamodb_table_name }} \
           sqs_queue_name=${{ env.sqs_queue_name }} \
           s3_bucket_name=${{ env.s3_bucket_name }} \
-          AWS_REGION=${{ vars.AWS_REGION }} \
+          aws_region=${{ vars.AWS_REGION }} \
           alb_url=${{ vars.ALB_URL }}"
 
 

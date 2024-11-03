@@ -35,6 +35,11 @@ def get_secret():
 
 app = flask.Flask(__name__)
 
+print("AWS Region:", aws_region)
+print("DynamoDB Table:", dynamodb_table)
+print("ALB URL:", alb_url)
+
+
 dynamodb = boto3.resource('dynamodb', region_name=aws_region)
 # TODO load TELEGRAM_TOKEN value from Secret Manager
 TELEGRAM_TOKEN = get_secret()

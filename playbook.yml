@@ -1,13 +1,6 @@
 ---
 - hosts: servers
-  become: true
-  vars:
-    aws_region: "{{ lookup('env', 'AWS_REGION') }}"
-    dynamodb_table_name: "{{ lookup('env', 'DYNAMODB_TABLE') }}"
-    alb_url: "{{ lookup('env', 'ALB_URL') }}"
-    s3_bucket_name: "{{ lookup('env', 'S3_BUCKET') }}"
-    sqs_queue_name: "{{ lookup('env', 'SQS_URL') }}"
-    
+  become: true 
   tasks:
     - name: Install Docker
       apt:
