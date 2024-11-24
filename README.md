@@ -72,6 +72,9 @@ The CD process deploys the updated Docker image to all instances tagged with `Po
      - Restart the bot to ensure it runs with the new image and settings.
    - An SSH private key (`secrets.PRIVATE_KEY`) is used to connect securely to all instances.
 
+
+![][cicd]
+
 ---
 
 ## Detailed Example of Automation Flow
@@ -118,3 +121,7 @@ The automation process uses the following environment variables for security and
 ## Conclusion
 
 This CI/CD pipeline leverages **GitHub Actions**, **Ansible**, and **AWS** to provide a robust and automated deployment process for PolyBot. By automating the build, push, and deployment processes, the system remains up-to-date, scalable, and efficient, ensuring seamless functionality for all cloud-hosted bots.
+
+
+
+[cicd]: https://github.com/gatmbarz123/PolyBot/blob/main/photos/Poybotcicd.png
