@@ -6,6 +6,7 @@ from telebot.types import InputFile
 import boto3
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
 
+
 import json
 
 s3_bucket   =   os.getenv("S3_BUCKET")

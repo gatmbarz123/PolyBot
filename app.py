@@ -5,6 +5,9 @@ from bot import ObjectDetectionBot
 import boto3
 from botocore.exceptions import ClientError
 import json
+from prometheus_flask_exporter import PrometheusMetrics
+
+
 
 aws_region  =   os.getenv("AWS_REGION")
 dynamodb_table=os.getenv("DYNAMODB_TABLE")
@@ -34,6 +37,7 @@ def get_secret():
 
 
 app = flask.Flask(__name__)
+metrics = PrometheusMetrics(app)
 
 print("AWS Region:", aws_region)
 print("DynamoDB Table:", dynamodb_table)
